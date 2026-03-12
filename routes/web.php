@@ -1,7 +1,6 @@
 <?php
-
+use App\Livewire\PosTerminal;
 use Illuminate\Support\Facades\Route;
+// use App\Http\Controllers\PosTerminalController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', PosTerminal::class);
