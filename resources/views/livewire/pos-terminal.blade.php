@@ -1,4 +1,33 @@
 <div>
+    <div> @if (session()->has('success'))
+        <div x-data="{ show: true }" 
+             x-show="show" 
+             x-init="setTimeout(() => show = false, 5000)"
+             class="fixed top-5 right-5 z-[99] w-80 animate-fade-in-down">
+            
+            <div class="bg-white border-l-4 border-green-500 shadow-2xl rounded-xl p-4 flex items-start gap-4">
+                <div class="bg-green-100 p-2 rounded-full text-green-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-gray-800">{{ session('success') }}</h3>
+                    <div class="text-sm text-gray-600 mt-1">
+                        <p>Pelanggan: <span class="font-bold text-gray-900">{{ session('customer') ?? '-' }}</span></p>
+                        <p>Meja: <span class="font-bold text-gray-900">{{ session('table') ?? '-' }}</span></p>
+                    </div>
+                </div>
+                <button @click="show = false" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    @endif
+
+    </div>
     <div class="max-w-[1600px] mx-auto p-4 lg:p-6">
     <div class="flex flex-col lg:flex-row gap-6">
         <div class="flex-1">
@@ -19,19 +48,43 @@
 
             <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                 @foreach($products as $product)
-                <div wire:click="addToCart({{ $product->id }})" class="bg-white p-3 rounded-2xl border border-gray-100 hover:border-orange-500 transition-all cursor-pointer group">
-                    <div class="aspect-square bg-gray-100 rounded-xl mb-3 overflow-hidden">
-                        <img src="{{ $product->image ? asset('storage/'.$product->image) : 'https://via.placeholder.com/200' }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
-                    </div>
-                    <h3 class="font-bold text-gray-800 truncate">{{ $product->name }}</h3>
-                    <p class="text-sm text-gray-500 mb-2 capitalize">{{ $product->category }}</p>
-                    <div class="flex justify-between items-center">
-                        <span class="font-black text-orange-600 text-lg">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
-                        <div class="bg-orange-100 text-orange-600 p-2 rounded-lg group-hover:bg-orange-500 group-hover:text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
+                    <div wire:click="addToCart({{ $product->id }})" 
+                        wire:loading.attr="disabled"
+                        wire:target="addToCart({{ $product->id }})"
+                        class="bg-white p-3 rounded-2xl border border-gray-100 hover:border-orange-500 transition-all cursor-pointer group relative overflow-hidden">
+                        
+                        <div wire:loading wire:target="addToCart({{ $product->id }})" 
+                            class="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-20 flex items-center justify-center">
+                            <div class="flex flex-col items-center">
+                                <svg class="animate-spin h-8 w-8 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="aspect-square bg-gray-100 rounded-xl mb-3 overflow-hidden">
+                            <img src="{{ $product->image ? asset('storage/'.$product->image) : 'https://via.placeholder.com/200' }}" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                        </div>
+                        
+                        <h3 class="font-bold text-gray-800 truncate">{{ $product->name }}</h3>
+                        <p class="text-sm text-gray-500 mb-2 capitalize">{{ $product->category }}</p>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="font-black text-orange-600 text-lg">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                            
+                            <div class="bg-orange-100 text-orange-600 p-2 rounded-lg group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                                <svg wire:loading.remove wire:target="addToCart({{ $product->id }})" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <svg wire:loading wire:target="addToCart({{ $product->id }})" class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endforeach
             </div>
         </div>
@@ -39,10 +92,17 @@
         <div class="w-full lg:w-[400px]">
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[calc(100vh-60px)] sticky top-6 border border-gray-100">
                 <div class="p-5 border-b flex justify-between items-center">
-                    <h2 class="text-xl font-black text-gray-800 tracking-tight">PESANAN</h2>
+                    <h2 class="text-xl font-black text-gray-800 tracking-tight text-center">PESANAN</h2>
                 </div>
+                
 
                 <div class="flex-1 overflow-y-auto p-5 custom-scroll space-y-4">
+                    <div class="p-5 border-b">
+                        <label for="customerName" class="block text-sm font-medium text-gray-700 mb-1">Nama Pemesan</label>
+                        <input wire:model="customerName" type="text" id="customerName" required placeholder="Nama Pemesan" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <label for="nomormeja" class="block text-sm font-medium text-gray-700 mb-1 mt-3">Nomor Meja</label>
+                        <input wire:model="nomormeja" type="text" id="nomormeja" required placeholder="Nomor Meja" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
                     @forelse($cart as $id => $item)
                     <div class="flex gap-4 items-center animate-fade-in">
                         <div class="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
@@ -83,8 +143,22 @@
                         <span class="text-lg font-bold text-gray-800">Total</span>
                         <span class="text-2xl font-black text-orange-600">Rp {{ number_format($total, 0, ',', '.') }}</span>
                     </div>
-                    <button class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 transition transform active:scale-95">
-                        KONFIRMASI PESANAN
+                     <button 
+                        wire:click="checkout" 
+                        wire:loading.attr="disabled" 
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg transition transform active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed">
+                        
+                        <span wire:loading.remove wire:target="checkout">
+                            Konfirmasi Pesanan
+                        </span>
+
+                        <span wire:loading wire:target="checkout" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Memproses...
+                        </span>
                     </button>
                 </div>
             </div>
