@@ -28,6 +28,7 @@
     @endif
 
     </div>
+
     <div class="max-w-[1600px] mx-auto p-4 lg:p-6">
     <div class="flex flex-col lg:flex-row gap-6">
         <div class="flex-1">
@@ -89,7 +90,7 @@
             </div>
         </div>
 
-        <div class="w-full lg:w-[400px]">
+        <div class="w-full lg:w-[400px]" id="pesanan-section">
             <div class="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[calc(100vh-60px)] sticky top-6 border border-gray-100">
                 <div class="p-5 border-b flex justify-between items-center">
                     <h2 class="text-xl font-black text-gray-800 tracking-tight text-center">PESANAN</h2>
@@ -143,6 +144,21 @@
                         <span class="text-lg font-bold text-gray-800">Total</span>
                         <span class="text-2xl font-black text-orange-600">Rp {{ number_format($total, 0, ',', '.') }}</span>
                     </div>
+                        <label class="block text-xs font-bold text-orange-800 uppercase mb-3">Metode Pembayaran</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model="paymentMethod" value="cash" class="peer hidden" name="paymentMethod">
+                                <div class="p-3 border-2 border-white bg-white rounded-xl text-center peer-checked:border-orange-500 peer-checked:bg-orange-100 transition">
+                                    <span class="text-sm font-bold text-gray-700">Bayar Kasir</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model="paymentMethod" value="midtrans" class="peer hidden" name="paymentMethod">
+                                <div class="p-3 border-2 border-white bg-white rounded-xl text-center peer-checked:border-orange-500 peer-checked:bg-orange-100 transition">
+                                    <span class="text-sm font-bold text-gray-700">QRIS / Online</span>
+                                </div>
+                            </div>
+
                      <button 
                         wire:click="checkout" 
                         wire:loading.attr="disabled" 
@@ -165,4 +181,18 @@
         </div>
     </div>
 </div>
+<div class="fixed bottom-6 right-6 lg:hidden z-50">
+    <a href="#pesanan-section" class="relative bg-orange-500 text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition transform active:scale-90">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+
+        @if(count($cart) > 0)
+            <span class="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-black px-2 py-1 rounded-full border-2 border-white animate-bounce">
+                {{ collect($cart)->sum('qty') }}
+            </span>
+        @endif
+    </a>
 </div>
+</div>
+

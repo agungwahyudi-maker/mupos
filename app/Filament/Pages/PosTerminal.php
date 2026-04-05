@@ -12,18 +12,12 @@ class PosTerminal extends Page
 {
     protected string $view = 'filament.pages.pos-admin';
     protected static ?string $model = Product::class;
+     protected static ?string $navigationLabel = 'Kasir';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
-    public function getHeader(): ?\Illuminate\Contracts\View\View
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+    public function mount(): void
     {
-        // Menghilangkan header default agar area kerja lebih luas
-        return null;
-    }
-
-
-
-    public function getMaxContentWidth(): Width
-    {
-        return Width::Full;
+        // Begitu menu diklik, langsung pindah halaman ke route Blade tadi
+        redirect()->route('kasir');
     }
 }
