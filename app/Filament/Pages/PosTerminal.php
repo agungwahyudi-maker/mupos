@@ -15,9 +15,15 @@ class PosTerminal extends Page
      protected static ?string $navigationLabel = 'Kasir';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+
+
     public function mount(): void
     {
-        // Begitu menu diklik, langsung pindah halaman ke route Blade tadi
+        //cek apakah user sudah login
+        if (!auth()->check()) {
+            redirect()->route('admin/login');
+        }
+
         redirect()->route('kasir');
     }
 }

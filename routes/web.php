@@ -18,3 +18,12 @@ Route::get('/print/{id}', function ($id) {
     $order = Order::with('items.product')->findOrFail($id); 
     return view('pos.print', compact('order'));
 });
+//print dari pengunjung
+Route::get('/order/receipt/{order_number}', function ($order_number) {
+    // Cari order berdasarkan order_number (INV-xxxx)
+    $order = Order::where('order_number', $order_number)->firstOrFail();
+    // dd($order_number); // Debugging: pastikan order ditemukan berdasarkan order_number
+    return view('orders.receipt', compact('order'));
+})->name('order.receipt');
+
+Route::get('/order/scan/{code}', [OrderController::class, 'scan']);

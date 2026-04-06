@@ -195,4 +195,20 @@
     </a>
 </div>
 </div>
-
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+<script>
+    window.addEventListener('pay-midtrans', event => {
+        window.snap.pay(event.detail.token, {
+            onSuccess: function(result) {
+                // Jika sukses, arahkan ke halaman struk
+                window.location.href = "/order/receipt/" + result.order_id;
+            },
+            onPending: function(result) {
+                alert("Menunggu pembayaran! \nSegera lakukan pembayaran jika popup ini sudah ditutup maka tidak akan bisa melakukan penbayaran lagi");
+            },
+            onError: function(result) {
+                alert("Pembayaran gagal!");
+            }
+        });
+    });
+</script>

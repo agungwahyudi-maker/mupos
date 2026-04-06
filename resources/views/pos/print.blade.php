@@ -90,15 +90,7 @@
         <div class="center">
             <small>Scan Struk</small><br>
 
-            {!! QrCode::size(80)->generate(json_encode([
-                'invoice' => $order->order_number,
-                'total' => $order->total_price,
-                'payment' => $order->payment_method,
-                'items' => $order->items->map(fn($i) => [
-                    'name' => $i->product->name,
-                    'qty' => $i->quantity
-                ])
-            ])) !!}
+            {!! QrCode::size(80)->generate($order->order_number) !!}
         </div>
         
         <div class="center">

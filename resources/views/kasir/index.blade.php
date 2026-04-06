@@ -14,7 +14,7 @@
 
 <body class="bg-gray-100">
 
-<div x-data="posApp()" class="flex h-screen overflow-hidden">
+<div x-data="posApp()" class="flex h-screen overflow-hidden" x-init="init()">
     <!-- 🔥 MENU -->
     <div class="w-2/3 p-4 overflow-y-auto">
         <!-- SEARCH -->
@@ -86,6 +86,13 @@
 
         <h2 class="text-xl font-bold mb-4">🧾 Keranjang</h2>
         <div class="mb-5 space-y-2">
+            <input 
+                type="text" 
+                id="scanner"
+                placeholder="Scan barcode di sini..."
+                class="border rounded-lg p-2 w-full"
+                autofocus
+            >
             <input 
                 type="text"
                 x-model="customer_name"
@@ -180,13 +187,6 @@
 
 </div>
 
-<div x-show="qris_url" class="mt-4 p-4 border rounded bg-white text-center">
-    <p class="text-sm font-bold mb-2">Silahkan Scan QRIS</p>
-    
-    <img :src="qris_url" alt="QRIS Code" class="mx-auto w-64 shadow-sm">
-    
-    <p class="text-xs text-gray-500 mt-2">Nominal: Rp <span x-text="format(total)"></span></p>
-</div>
 
 <script src="https://app.sandbox.midtrans.com/snap/snap.js"
     data-client-key="{{ config('midtrans.client_key') }}">
@@ -205,6 +205,70 @@ function posApp() {
 
         customer_name: '',
         table_number: '',
+        order_number: null, // ✅ untuk menyimpan order_number hasil scan
+
+        init() {
+            let scanner = document.getElementById('scanner');
+            
+            scanner.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    let code = scanner.value;
+                    scanner.value = '';
+
+                    console.log('SCAN:', code);
+
+                    try {
+                        let res = await fetch('/order/scan/' + code);
+                        let result = await res.json();
+                        this.order_number = result.id; // Simpan order_number hasil scan
+                        console.log('HASIL SCAN:', result);
+
+                        // 🔥 CEK STATUS
+                        if (result.status === 'paid') {
+
+                            window.open('/print/' + result.order_id, '_blank');
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Order sudah lunas',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+
+                        } else {
+
+                            // 🔥 MASUKKAN KE CART (REACTIVE)
+                            result.items.forEach(item => {
+
+                                if (!this.cart[item.product_id]) {
+                                    this.cart[item.product_id] = {
+                                        id: item.product_id,
+                                        name: item.name,
+                                        price: item.price,
+                                        qty: item.qty
+                                    };
+                                } else {
+                                    this.cart[item.product_id].qty += item.qty;
+                                }
+
+                            });
+
+                            // 🔥 FORCE REACTIVITY (PENTING)
+                            this.cart = { ...this.cart };
+
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Belum dibayar',
+                                text: 'Pesanan masuk ke keranjang'
+                            });
+                        }
+
+                    } catch (err) {
+                        console.log(err);
+                    }
+                }
+            });
+        },
 
         get filteredProducts() {
             return this.products.filter(p => {
@@ -314,6 +378,7 @@ function posApp() {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
+                    order_id:this.order_id, // Sertakan order_number hasil scan
                     customer_name: this.customer_name,
                     table_number: this.table_number,
                     items: Object.values(this.cart), // Gunakan 'items' sesuai Controller Anda
