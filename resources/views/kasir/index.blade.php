@@ -89,6 +89,7 @@
             <input 
                 type="text" 
                 id="scanner"
+                x-model="order_number"
                 placeholder="Scan barcode di sini..."
                 class="border rounded-lg p-2 w-full"
                 autofocus
@@ -203,8 +204,9 @@ function posApp() {
         search: '',
         activeCategory: 'all',
 
-        customer_name: '',
-        table_number: '',
+        customer_name: string = '',
+        table_number: string = '',
+        order_id: null, // ✅ untuk menyimpan order_id hasil scan
         order_number: null, // ✅ untuk menyimpan order_number hasil scan
 
         init() {
@@ -237,7 +239,11 @@ function posApp() {
                             });
 
                         } else {
-
+                            //masukan custmomer name dan table number dari hasil scan
+                            this.order_id = result.order_id; // Simpan order_id hasil scan
+                            this.customer_name = result.customer_name;
+                            this.table_number = result.table_number;
+                            this.order_number = result.order_number; // Simpan order_number hasil scan
                             // 🔥 MASUKKAN KE CART (REACTIVE)
                             result.items.forEach(item => {
 
@@ -355,6 +361,8 @@ function posApp() {
             });
 
             const payload = {
+                order_number: this.order_number, // Sertakan order_number hasil scan
+                order_id: this.order_id, // Sertakan order_id hasil scan
                 customer_name: this.customer_name,
                 table_number: this.table_number,
                 // Pastikan qty dan price adalah angka
@@ -366,7 +374,8 @@ function posApp() {
                 })),
                 total_price: parseInt(this.total), // <--- Paksa jadi Integer
                 payment_method: this.payment,
-                cash: parseInt(this.cash || 0)
+                bayar: parseInt(this.cash || 0),
+                kembalian: parseInt(this.change) // <--- Paksa jadi Integer
             };
             console.log("Data yang dikirim ke server:", payload);
             
@@ -380,12 +389,13 @@ function posApp() {
                     },
                     body: JSON.stringify({
                         order_id:this.order_id, // Sertakan order_number hasil scan
+                        order_number: this.order_number, // Sertakan order_number hasil scan
                         customer_name: this.customer_name,
                         table_number: this.table_number,
                         items: Object.values(this.cart), // Gunakan 'items' sesuai Controller Anda
                         total_price: this.total,
                         payment_method: this.payment,
-                        cash: this.cash,
+                        bayar: this.cash,
                         kembalian: (this.cash - this.total)
                     })
                 });
@@ -422,9 +432,6 @@ function posApp() {
 
                             onSuccess: function(res) {
                                 console.log('Pembayaran berhasil:', res);
-                                //berhenti disini dulu untuk cek apakah order_id sudah masuk ke database atau belum
-                                // die;
-                                //jika order id sudah ada maka update status menjadi paid
                                 if (res.order_id) {
                                     fetch('api/midtrans/webhook', {
                                         method: 'POST',

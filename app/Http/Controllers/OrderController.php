@@ -26,6 +26,9 @@ class OrderController extends Controller
         return response()->json([
             'status' => $order->status,
             'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'customer_name' => $order->customer_name,
+            'table_number' => $order->table_number,
             'items' => $order->items->map(function ($item) {
                 return [
                     'product_id' => $item->product_id,

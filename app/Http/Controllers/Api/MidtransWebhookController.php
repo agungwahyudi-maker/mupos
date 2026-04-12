@@ -23,6 +23,9 @@ class MidtransWebhookController extends Controller
         $status = $data['transaction_status'];
 
         if ($status == 'settlement') {
+            //update bayar dan kembalian jika status settlement
+            $order->bayar = $order->total_price; // Karena ini pembayaran online, anggap semua dibayar
+            $order->kembalian = 0; // Karena ini pembayaran online
             $order->status = 'paid';
         } elseif ($status == 'pending') {
             $order->status = 'pending';
