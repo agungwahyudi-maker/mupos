@@ -195,20 +195,47 @@
     </a>
 </div>
 </div>
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+
+<script src="https://app.sandbox.midtrans.com/snap/snap.js"
+    data-client-key="{{ config('midtrans.client_key') }}"></script>
+
 <script>
-    window.addEventListener('pay-midtrans', event => {
-        window.snap.pay(event.detail.token, {
+document.addEventListener('livewire:init', () => {
+
+    Livewire.on('pay-midtrans', ({ token, order_id }) => {
+
+        snap.pay(token, {
+
             onSuccess: function(result) {
-                // Jika sukses, arahkan ke halaman struk
-                window.location.href = "/order/receipt/" + result.order_id;
+                fetch('api/midtrans/webhook',{
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        order_id: order_id,
+                        transaction_status: 'settlement'
+                    })
+                })
+                window.location.href = "/order/receipt/" + order_id;
             },
+
             onPending: function(result) {
-                alert("Menunggu pembayaran! \nSegera lakukan pembayaran jika popup ini sudah ditutup maka tidak akan bisa melakukan penbayaran lagi");
+                alert("Menunggu pembayaran!");
             },
+
             onError: function(result) {
                 alert("Pembayaran gagal!");
+            },
+
+            onClose: function() {
+                alert("Popup ditutup, transaksi masih pending!");
             }
+
         });
+
     });
+
+});
 </script>

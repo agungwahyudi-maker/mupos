@@ -185,9 +185,9 @@ class CheckoutController extends Controller
             return DB::transaction(function () use ($request) {
 
                 // 🔥 CEK: JIKA ADA ORDER_ID → UPDATE
-                if ($request->order_id) {
+                if ($request->order_id || $request->order_number) {
 
-                    $order = Order::findOrFail($request->order_id);
+                    $order = Order::where('id', $request->order_id)->orWhere('order_number', $request->order_number)->firstOrFail();
 
                     // Hapus item lama
                     $order->items()->delete();

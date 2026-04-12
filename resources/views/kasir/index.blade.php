@@ -226,6 +226,7 @@ function posApp() {
                         // 🔥 CEK STATUS
                         if (result.status === 'paid') {
 
+
                             window.open('/print/' + result.order_id, '_blank');
 
                             Swal.fire({
@@ -344,130 +345,147 @@ function posApp() {
 
 
         async checkout() {
-        if (!this.canCheckout) return;
+            if (!this.canCheckout) return;
 
-        // Tampilkan loading agar user tidak klik berkali-kali
-        Swal.fire({
-            title: 'Memproses Pesanan...',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading() }
-        });
-
-        const payload = {
-            customer_name: this.customer_name,
-            table_number: this.table_number,
-            // Pastikan qty dan price adalah angka
-            items: Object.values(this.cart).map(item => ({
-                id: item.id,
-                name: item.name,
-                qty: parseInt(item.qty),
-                price: parseInt(item.price) 
-            })),
-            total_price: parseInt(this.total), // <--- Paksa jadi Integer
-            payment_method: this.payment,
-            cash: parseInt(this.cash || 0)
-        };
-        console.log("Data yang dikirim ke server:", payload);
-        
-        try {
-            let response = await fetch('/api/checkout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    order_id:this.order_id, // Sertakan order_number hasil scan
-                    customer_name: this.customer_name,
-                    table_number: this.table_number,
-                    items: Object.values(this.cart), // Gunakan 'items' sesuai Controller Anda
-                    total_price: this.total,
-                    payment_method: this.payment,
-                    cash: this.cash,
-                    kembalian: (this.cash - this.total)
-                })
+            // Tampilkan loading agar user tidak klik berkali-kali
+            Swal.fire({
+                title: 'Memproses Pesanan...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
             });
 
-            let result = await response.json();
-
-            if (response.ok && result.success) {
-
-                console.log("Response dari server:", result);
-                if(result.type==='cash'){
-                    this.resetCart();
-                    // NOTIFIKASI BERHASIL
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Transaksi Cash telah disimpan.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        // Redirect ke halaman print setelah notifikasi hilang
-                        window.location.href = '/print/' + result.id;
-                    });
-                }
-
-                if (result.type === 'midtrans') {
-
-                    let orderId = result.order_id; // ✅ ambil dari backend
-                    let snapToken = result.snap_token;
-                    let self = this; // ✅ simpan context Alpine
-                    if (result.qris_url) {
-                        this.qris_url = result.qris_url; // Simpan URL-nya
-                    }
-                    snap.pay(snapToken, {
-
-                        onSuccess: function(res) {
-                            console.log('Pembayaran berhasil:', res);
-
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Pembayaran Berhasil',
-                                timer: 2000,
-                                showConfirmButton: false
-                            }).then(() => {
-                                window.location.href = '/print/' + orderId;
-                            });
-
-                            self.resetCartAll(); // ✅ FIX
-                        },
-
-                        onPending: function(res) {
-                            console.log('Pending:', res);
-
-                            Swal.fire({
-                                icon: 'info',
-                                title: 'Menunggu Pembayaran'
-                            });
-                        },
-
-                        onError: function(res) {
-                            console.log('Error:', res);
-
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Pembayaran Gagal'
-                            });
-                        }
-                    });
-                }
-                
-            } else {
-                // NOTIFIKASI GAGAL DARI SERVER (Misal: Stok Habis/Database Error)
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Transaksi Gagal',
-                    text: result.message || 'Terjadi kesalahan pada server.'
+            const payload = {
+                customer_name: this.customer_name,
+                table_number: this.table_number,
+                // Pastikan qty dan price adalah angka
+                items: Object.values(this.cart).map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    qty: parseInt(item.qty),
+                    price: parseInt(item.price) 
+                })),
+                total_price: parseInt(this.total), // <--- Paksa jadi Integer
+                payment_method: this.payment,
+                cash: parseInt(this.cash || 0)
+            };
+            console.log("Data yang dikirim ke server:", payload);
+            
+            try {
+                let response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        order_id:this.order_id, // Sertakan order_number hasil scan
+                        customer_name: this.customer_name,
+                        table_number: this.table_number,
+                        items: Object.values(this.cart), // Gunakan 'items' sesuai Controller Anda
+                        total_price: this.total,
+                        payment_method: this.payment,
+                        cash: this.cash,
+                        kembalian: (this.cash - this.total)
+                    })
                 });
-            }
 
-        } catch (error) {
-            // NOTIFIKASI GAGAL KONEKSI
-            console.log(error);
+                let result = await response.json();
+
+                if (response.ok && result.success) {
+
+                    console.log("Response dari server:", result);
+                    if(result.type==='cash'){
+                        this.resetCart();
+                        // NOTIFIKASI BERHASIL
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Transaksi Cash telah disimpan.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Redirect ke halaman print setelah notifikasi hilang
+                            window.location.href = '/print/' + result.id;
+                        });
+                    }
+
+                    if (result.type === 'midtrans') {
+
+                        let orderId = result.order_id; // ✅ ambil dari backend
+                        let snapToken = result.snap_token;
+                        let self = this; // ✅ simpan context Alpine
+                        if (result.qris_url) {
+                            this.qris_url = result.qris_url; // Simpan URL-nya
+                        }
+                        snap.pay(snapToken, {
+
+                            onSuccess: function(res) {
+                                console.log('Pembayaran berhasil:', res);
+                                //berhenti disini dulu untuk cek apakah order_id sudah masuk ke database atau belum
+                                // die;
+                                //jika order id sudah ada maka update status menjadi paid
+                                if (res.order_id) {
+                                    fetch('api/midtrans/webhook', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({
+                                            order_id: res.order_id,
+                                            transaction_status: 'settlement' // Atau 'paid' sesuai kebutuhan Anda
+                                        })
+                                    });
+                                }
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Pembayaran Berhasil',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '/print/' + orderId;
+                                });
+
+                                self.resetCartAll(); // ✅ FIX
+                            },
+
+                            onPending: function(res) {
+                                console.log('Pending:', res);
+
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Menunggu Pembayaran'
+                                });
+                            },
+
+                            onError: function(res) {
+                                console.log('Error:', res);
+
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Pembayaran Gagal'
+                                });
+                            }
+                        });
+                    }
+                    
+                } else {
+                    // NOTIFIKASI GAGAL DARI SERVER (Misal: Stok Habis/Database Error)
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Transaksi Gagal',
+                        text: result.message || 'Terjadi kesalahan pada server.'
+                    });
+                }
+
+            } catch (error) {
+                // NOTIFIKASI GAGAL KONEKSI
+                console.log(error);
+            }
         }
-    }
     }
 }
 </script>

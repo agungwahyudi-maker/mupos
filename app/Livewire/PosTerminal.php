@@ -58,53 +58,6 @@ class PosTerminal extends Component
         }
     }
 
-    // public function checkout()
-    // {
-    //     if (empty($this->cart)) {
-    //         return session()->flash('error', 'Keranjang masih kosong!');
-    //     }
-
-    //     try {
-    //         DB::transaction(function () {
-    //             $totalPrice = collect($this->cart)->sum(fn($item) => $item['price'] * $item['qty']);
-
-    //             // 2. Simpan ke tabel orders
-    //             $order = Order::create([
-    //                 'shop_id'        => auth()->user()->shop_id ?? 1,
-    //                 'user_id'        => auth()->id(),
-    //                 'order_number'   => 'INV-' . now()->format('YmdHis'),
-    //                 'total_price'    => $totalPrice,
-    //                 'payment_method' => 'cash',
-                    
-    //                 // SESUAIKAN DENGAN NAMA KOLOM DI DATABASE ANDA SETELAH MIGRATE
-    //                 'customer_name'  => $this->customerName, 
-    //                 'table_number'   => $this->nomormeja,
-    //             ]);
-
-    //             // 3. Simpan Detail Item
-    //             foreach ($this->cart as $id => $item) {
-    //                 OrderItem::create([
-    //                     'order_id'      => $order->id,
-    //                     'product_id'    => $id,
-    //                     'quantity'      => $item['qty'],
-    //                     'price_at_sale' => $item['price'],
-    //                 ]);
-    //             }
-    //         });
-
-    //         // Simpan data ke session flash sebelum di-reset
-    //         session()->flash('success', "Pesanan Berhasil Disimpan!");
-    //         session()->flash('customer', $this->customerName);
-    //         session()->flash('table', $this->nomormeja);
-
-    //         // 4. Reset form setelah berhasil
-    //         $this->reset(['cart', 'customerName', 'nomormeja']);
-    //         session()->flash('success', 'Pesanan berhasil disimpan!');
-
-    //     } catch (\Exception $e) {
-    //         session()->flash('error', 'Gagal: ' . $e->getMessage());
-    //     }
-    // }
 
 
     public function checkout()
@@ -159,33 +112,64 @@ class PosTerminal extends Component
     }
 
 
+    // protected function processMidtrans($order)
+    // {
+
+    //     // Konfigurasi Midtrans
+    //     Config::$serverKey = config('midtrans.server_key');
+    //     Config::$isProduction = false; // set true jika sudah live
+    //     Config::$isSanitized = true;
+    //     Config::$is3ds = true;
+
+    //     $params = [
+    //         'transaction_details' => [
+    //             'order_id' => $order->order_number,
+    //             'gross_amount' => $order->total_price,
+    //         ],
+    //         'customer_details' => [
+    //             'first_name' => $this->customerName,
+    //         ],
+    //     ];
+
+    //     try {
+    //         $snapToken = Snap::getSnapToken($params);
+            
+    //         // Kirim event ke browser untuk memunculkan popup Midtrans
+    //         $this->dispatch('pay-midtrans', token: $snapToken);
+            
+    //         // Opsional: Kosongkan keranjang setelah token muncul
+    //         $this->reset(['cart', 'customerName', 'nomormeja']);
+    //     } catch (\Exception $e) {
+    //         session()->flash('error', 'Midtrans Error: ' . $e->getMessage());
+    //     }
+    // }
+
     protected function processMidtrans($order)
     {
-
-        // Konfigurasi Midtrans
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = false; // set true jika sudah live
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = false;
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
 
         $params = [
             'transaction_details' => [
                 'order_id' => $order->order_number,
-                'gross_amount' => $order->total_price,
+                'gross_amount' => (int) $order->total_price,
             ],
             'customer_details' => [
-                'first_name' => $this->customerName,
+                'first_name' => $this->customerName ?? 'Guest',
             ],
         ];
 
         try {
-            $snapToken = Snap::getSnapToken($params);
-            
-            // Kirim event ke browser untuk memunculkan popup Midtrans
-            $this->dispatch('pay-midtrans', token: $snapToken);
-            
-            // Opsional: Kosongkan keranjang setelah token muncul
-            $this->reset(['cart', 'customerName', 'nomormeja']);
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+            // 🔥 kirim token + order number
+            $this->dispatch('pay-midtrans', 
+                token: $snapToken,
+                order_id: $order->order_number
+            );
+
         } catch (\Exception $e) {
             session()->flash('error', 'Midtrans Error: ' . $e->getMessage());
         }
